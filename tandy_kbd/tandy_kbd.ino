@@ -1,7 +1,7 @@
 #include <PS2KeyAdvanced.h>
 
 #define PS2_DATA 4
-#define PS2_CLOCK 3 // Must be 3 or 2 on Uno.
+#define PS2_CLOCK 3 // Must be 3 or 2 on Uno/Pro/Pro Mini.
 
 #define TANDY_DATA 5
 #define TANDY_CLOCK 6
@@ -65,7 +65,7 @@ void bit_bang_tandy_scancode(uint8_t code)
   {
     pre_computed[i] = ((code >> i) & 0x01);
   }
-  
+ 
   bit_bang_tandy_symbol(pre_computed[0]);
   bit_bang_tandy_symbol(pre_computed[1]);
   bit_bang_tandy_symbol(pre_computed[2]);
@@ -106,13 +106,13 @@ const uint8_t PS2_TO_TANDY_NORMAL_LOOKUP[128] = {
   /* 0x78 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x7f */
 };
 
-/* This is a special lookup table for when the PS/2 Num Lock is on. 
+/* This is a special lookup table for when the PS/2 Num Lock is on.
  *
  * It only has entries for 0x20-0x2f because only the numpad is affected
  * by Num Lock. When num lock is off, PS2_TO_TANDY_NORMAL_LOOKUP is used.
- * 
+ *
  * All other codes will always use PS2_TO_TANDY_NORMAL_LOOKUP.
- * 
+ *
  * The high bit has the same meaning as in PS2_TO_TANDY_NORMAL_LOOKUP.
  */
 const uint8_t PS2_TO_TANDY_NUMLOCK_LOOKUP[16] = {
@@ -122,10 +122,10 @@ const uint8_t PS2_TO_TANDY_NUMLOCK_LOOKUP[16] = {
 
 /* This function is for PS/2 keys whose shift actions don't match up with
  * the shift action of their Tandy counterparts.
- * 
+ *
  * This could also be a lookup table, but there are only two keys so it seemed
  * like a waste.
- * 
+ *
  * The high bit in the return has the same meaning as in PS2_TO_TANDY_NORMAL_LOOKUP.
  */
 inline uint8_t special_shift_action(uint8_t ps2_code)
@@ -213,7 +213,7 @@ bool set_flag_detect_change(bool& flag, bool new_value)
 
 /* Decode the code from the lookup table and send an appropriate combination of
  * scan codes to get the desired action.
- * 
+ *
  * tandy_code is the result from the lookup tables, NOT a raw Tandy scan code.
  * key_break is true if this is a break event, false if this is a make event.
  */
@@ -263,7 +263,7 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
   }
 
   // Since PS/2 codes don't map perfectly into Tandy codes, we may have to send some modifiers.
-  bool needs_modifier = tandy_code & 0x80u; 
+  bool needs_modifier = tandy_code & 0x80u;
   bool shift = false;
   bool numlock = false;
   bool unnumlock = false;
@@ -294,6 +294,9 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
     {
       bit_bang_tandy_scancode(TANDY_NUMLOCK);
     }
+
+    // Flash LED
+    digitalWrite(LED, HIGH);
   }
   else
   {
@@ -310,6 +313,9 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
       bit_bang_tandy_scancode(TANDY_NUMLOCK | 0x80u);
     }
     bit_bang_tandy_scancode(tandy_code);
+
+    // Unflash LED
+    digitalWrite(LED, LOW);
   }
 }
 

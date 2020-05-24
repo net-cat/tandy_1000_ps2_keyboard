@@ -1,7 +1,5 @@
 # Tandy 1000 Keyboard Adapter
 
-> WARNING: This is all very preliminary. I'm still working on getting everything polished up. I plan to add pictures later.
-
 ## What is this for?
 
 Tandy 1000 machines are becoming collectors items and there seems to be a lot of them where the keyboard has been lost or damaged. This is unfortunate because they use a non-standard 8-pin keyboard connection that was unique to Tandy, and there seem to be more of the computers out there than the keyboards.
@@ -22,95 +20,53 @@ I personally have only tested this with a Tandy 1000 TX, but in theory the follo
 
 ## How do I use this?
 
-There are two ways you can use this:
-
-### External Adapter
-
-The external adapter may be preferrable because it doesn't require modifying the system and because it can be used on multiple systems, but it requires a lot more soldering.
-
-#### Supplies
-
-* 8-Pin DIN Connectors ([example](https://www.amazon.com/gp/product/B07GLQ7PXX/))
-* AT to PS/2 Adapter ([example](https://www.amazon.com/gp/product/B07KVF5TV9/))
-* Arduino Uno R3 or compatible board. ([example](https://store.arduino.cc/usa/arduino-uno-rev3))
-* Arduino IDE ([link](https://www.arduino.cc/en/Main/Software))
-* Some wires that you can connect to an Arduino on one end and solder on the other.
-* Some soldering skills.
-
-#### 8-pin DIN numbering
-
-Looking straight at the 8-pin DIN **plug**, the top *right* pin is 1, increasing as you move *clockwise*. The center pin is 8.
-
-Looking straight at the 8-pin DIN **socket**, the top *left* hole is 1, increasing as you move *counter-clockwise*. The center pin is 8.
-
-#### Connections 
-
-> NOTE: These directions are tentative. I have not fully tested them yet.
-
-1. Solder some wires onto an 8-pin DIN plug. This will plug into the Tandy. (This will be annoying, but you only need 6.)
-2. Wire these signals into the Arduino.
-
-| Pin | Arduino Pin |Signal         |
-|-----|-------------|---------------|
-| 1   | Not connected. |            |
-| 2   | Any `GND`   | `Ground`      |
-| 3   | `Vin`       | `+5V`          |
-| 4   | *TBD*       | `Busy`(2)      |
-| 5   | `6`         | `Clock`        |
-| 6   | `5`         | `Data`         |
-| 7   | *TBD*       | `Reset`(2)     |
-| 8   | Not connected. |            |
-
-(2) Not needed for a functional keyboard, but may cause glitches.
-
-3. Solder some wires onto an 8-pin DIN socket. This what the AT-to-PS/2 Adapter will plug into.
-4. Wire these signals into the Arduino.
-
-| Pin | Arduino Pin | Signal         |
-|-----|-------------|----------------|
-| 1   | Not connected. |             |
-| 2   | Not connected. |             |
-| 3   | `5V`        | `+5V`         |
-| 4   | `4`         |`Data`         |
-| 5   | Any `GND`   |`Ground`       |
-| 6   | `3`         |`Clock`        |
-| 7   | Not connected. |             |
-| 8   | Not connected. |             |
-
-5. Connect your PS/2 keyboard to the AT-to-PS/2 adapter.
-6. Connect your AT-to-PS/2 adapter to the 8-pin DIN socket on the arduino.
-7. Connect the 8-pin plug to the Tandy 1000.
-8. Turn the Tandy 1000 on.
-9. Continue with the "Configuring the Arduino" section below.
-
-### Internal Adapter
-
-I plan to do an internal version of this, since I only have one machine. It's very tentative right now.
-
-#### Supplies
+### Supplies
 
 * PS2 Slot Plate Bracket ([example](https://www.amazon.com/gp/product/B0002AFZV2/))
-* Arduino Uno R3 or compatible board. ([example](https://store.arduino.cc/usa/arduino-uno-rev3))
+* Arduino Pro Mini or compatible board. ([example](https://store.arduino.cc/usa/arduino-pro-mini))
+* Some female Dupont connectors you can sacrifice. ([example](https://www.amazon.com/gp/product/B01EV70C78/))
 * Arduino IDE ([link](https://www.arduino.cc/en/Main/Software))
-* Some wires that you can connect to an Arduino on one end and solder on the other.
-* Some soldering skills.
+* Small gauge wire. ([link](https://www.amazon.com/gp/product/B0791BL9HN/))
+* A USB to TTL Serial adapter for programming the arduino. ([example](https://www.amazon.com/gp/product/B00IJXZQ7C/))
+* A 5V molex connector you can sacrifice. ([example](https://www.amazon.com/gp/product/B07V5919H8/))
 
-#### Connections
-
-I haven't done the implementation on this yet, but in principle you solder wires onto the keyboard interface on the motherboard, connect them to the Arduino, connect the slot cover to the arduino, then install the slot cover.
+> NOTE: These directions assume you have some familiarity with DIY electronics and soldering, as well as with programming an Arduino.
 
 ### Configuring the Arduino
 
-> NOTE: If your Tandy 1000 is turned off when you plug in the USB, you will have to disconnect the `Vin` pin for the USB interface to work.
+> NOTE: Please be careful about programming the Arduino while it is installed. Your USB port can't power the Tandy 1000's 5V rail.
 
-1. Connect your Arduino to the system, installing the drivers if you have Windows.
+1. Connect your USB/TTL Adapter to your system, installing the drivers if you have Windows.
 2. Install the [PS2KeyAdvanced](https://github.com/techpaul/PS2KeyAdvanced) library into your Arduino IDE. (Either from GitHub or the `Tools -> Manage Libraries...` menu.)
-3. In the Tools menu, set the board to `Arduino Uno` and the Port to whatever says `Arduino Uno` next to it.
+3. In the Tools menu, set the board to `Arduino Pro or Pro Mini` and the Port to whatever whatever your USB/TTL adater is.
+4. Connect your USB/TTL Adapter to the Arduino Pro Mini. (Make sure to hook up the DTR line, as it's needed for programming. You may need to solder the serial header onto the Pro Mini.)
 4. Open the `tandy_kbd.ino` file in the IDE.
 5. Press the `Upload` button.
 6. Once the upload is completed, disconnect the USB cable.
 
+### Connections
+
+1. Remove the Dupont connector block from the PS2 slot plate bracket. Replace the four wires with individual Dupont connectors.
+2. Most Arduino Pro Mini boards come with pin headers you can solder onto the board. Solder two pin headers into pins `3` and `4`. These are your PS/2 `CLK` and `DATA` lines, respectively.
+3. Solder the 5V molex connector to `VCC` and `GND` on the board. (Note that if you use a fan connector, those are connected to 12V. You will have to modify it to connect to 5V instead. The Pro Mini doesn't have the voltage regulation of the Uno.)
+4. Solder two long wires to pins `5` and `6` on the Pro Mini. (Use different colors to make it easier to tell them apart.) These will be your Tandy `DATA` and `CLK` lines, respectively. I suggest 18-24 inches. You can always cut off excess later.
+5. Strip about a half an inch of insulation off the other ends of the wires from step 4.
+6. Plug the PS/2's `VCC` and `GND` connections into the corresponding ports on the Pro Mini's serial pin header. (Looking at the female PS/2 connector, middle left for `VCC` and middle right for `GND`.)
+7. Plug the PS/2's `CLK` and `DATA` lines into the pin headers you soldered onto pins `3` and `4`, respectively. (Looking at the female PS/2 connector, top right for `CLK` and bottom right for `DATA`.)
+8. Feed the Tandy `CLK` and `DATA` wires from step for through the front of the case and plug the bare wire into the keyboard socket. (Looking at the Tandy 1000 keyboard connector, `CLK` is the far left and `DATA` is the bottom left, immediately below `CLK`.)
+9. Place a piece of tape over the keyboard connector to secure the wires. Also secure the wires inside the case to prevent them from being pulled out when the case is open.
+9. Plug the molex connector into a spare connector from the power supply.
+10. Mount the Pro Mini in the case in a way that makes you feel comfortable that it won't short anything out.
+
 If everything is connected correctly, the adapter should be fully functional. You can type on the keyboard and it should work mostly as expected.
+
+### Images
+
+This is what the finished project looks like in my Tandy 1000 TX:
+
+![Image of Arduino](https://raw.githubusercontent.com/net-cat/tandy_1000_ps2_keyboard/master/images/pro_mini_connected.jpg)
+
+![Image of Keyboard Connector](https://raw.githubusercontent.com/net-cat/tandy_1000_ps2_keyboard/master/images/keyboard_connector_wired.jpg)
 
 ## Quirks
 
@@ -155,10 +111,8 @@ The following types of buttons have no meaning on a Tandy 1000 and are dead keys
 
 ## TODO:
 
-* Finish implementing keys.
-* Pictures.
-* Better connection guides.
-* Implement BUSY and RESET signals from Tandy.
+* Finish implementing Print/Hold/Break keys.
 * PS2KeyAdvanced supports other languages. Make that easier to configure.
+* Implement BUSY and RESET signals from Tandy. (Honestly, I'm probably not going to do this. Not using them doesn't seem to cause any problems, but I'll accept pull requests if someone else does it.)
 
 
