@@ -8,6 +8,8 @@
 
 #define LED 13
 
+#define SHOW_DEBUG_PRINT
+
 PS2KeyAdvanced g_Keyboard;
 
 void setup()
@@ -27,8 +29,7 @@ void setup()
 
   // Serial Debug Setup
   Serial.begin(115200);
-  Serial.println("Keyboard Test:");
-
+  Serial.println("Tandy 1000 Keyboard Converter");
 }
 
 inline void bit_bang_tandy_symbol(bool value)
@@ -56,8 +57,10 @@ void bit_bang_tandy_scancode(uint8_t code)
     return;
   }
 
+  #ifdef SHOW_DEBUG_PRINT
   Serial.print("Sending Tandy Scancode: ");
   Serial.println(code, HEX);
+  #endif
 
   char pre_computed[8];
 
@@ -90,7 +93,7 @@ If no, Tandy Shift must be pressed if the high bit is set.
 Codes 0x80 and up are things like ACPI and Media buttons, so we're ignoring them.
 */
 const uint8_t PS2_TO_TANDY_NORMAL_LOOKUP[128] = {
-  /* 0x00 */ 0x00, 0x45, 0x00, 0x3a, 0x00, 0x00, 0x2a, 0x36, /* 0x07 */
+  /* 0x00 */ 0x00, 0x45, 0x46, 0x3a, 0x00, 0x00, 0x2a, 0x36, /* 0x07 */
   /* 0x08 */ 0x1d, 0x1d, 0x38, 0x38, 0x00, 0x00, 0x00, 0x00, /* 0x0f */
   /* 0x10 */ 0x00, 0x58, 0x4f, 0x49, 0x51, 0x2b, 0x4e, 0x29, /* 0x17 */
   /* 0x18 */ 0x4a, 0x55, 0x53, 0x01, 0x0e, 0x0f, 0x1c, 0x39, /* 0x1f */
@@ -223,7 +226,9 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
 {
   if(!tandy_code)
   {
+    #ifdef SHOW_DEBUG_PRINT
     Serial.println("*** DEAD KEY ***");
+    #endif
     return;
   }
 
@@ -359,12 +364,20 @@ void loop()
       uint8_t tandy_code = convert_ps2_to_tandy_code(ps2_code);
       transmit_tandy_code(tandy_code, ps2_code.BREAK);
 
+      // Never allow SCROLL LOCK light to be on.
+      if(ps2_code.code == 0x02)
+      {
+        g_Keyboard.setLock(g_Keyboard.getLock() & (~PS2_LOCK_SCROLL));
+      }
+
+      #ifdef SHOW_DEBUG_PRINT
       Serial.print( "Value " );
       Serial.print( ps2_code.raw, HEX );
       Serial.print( " - Status Bits " );
       Serial.print( ps2_code.status_bits, HEX );
       Serial.print( "  Code " );
       Serial.println( ps2_code.code, HEX );
+      #endif
     }
   }
 }

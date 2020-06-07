@@ -91,10 +91,13 @@ Other Quirks:
 * Number Pad Asterisk will press Right Shift+8
 * Number Pad Forward Slash will press the Forward Slash/Question Mark key. (Pressing it with Shift held will result in a question mark.)
 
+Tandy Keys with no PS/2 Equivalent:
+
+* Hold is mapped to Scroll Lock. (Light is disabled since there's no way to determine state.)
+
 The following keys on the Tandy keyboard are not yet implemented:
 
 * Print (Likely to be PrtSc/SysRq)
-* Hold (Likely to be Scroll Lock)
 * Break (Likely to be Pause/Break)
 
 Keys that have multiple copies on a PS/2 keyboard but only one on a Tandy keyboard cannot be differentiated by the Tandy:
