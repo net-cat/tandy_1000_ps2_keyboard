@@ -65,7 +65,8 @@ void bit_bang_tandy_scancode(uint8_t code)
   {
     pre_computed[i] = ((code >> i) & 0x01);
   }
- 
+
+  noInterrupts();
   bit_bang_tandy_symbol(pre_computed[0]);
   bit_bang_tandy_symbol(pre_computed[1]);
   bit_bang_tandy_symbol(pre_computed[2]);
@@ -75,6 +76,7 @@ void bit_bang_tandy_scancode(uint8_t code)
   bit_bang_tandy_symbol(pre_computed[6]);
   bit_bang_tandy_symbol(pre_computed[7]);
   bit_bang_tandy_stop_bit();
+  interrupts();
 }
 
 /*
