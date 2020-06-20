@@ -8,6 +8,10 @@
 
 #define LED 13
 
+// Each keypress can insert up to three scancodes in the queue.
+// This will keep the buffer from filling up if you hold down a key.
+#define MAX_CODES_PER_LOOP 3
+
 #define SHOW_DEBUG_PRINT
 
 PS2KeyAdvanced g_Keyboard;
@@ -42,6 +46,20 @@ inline void bit_bang_tandy_symbol(bool value)
   delayMicroseconds(14);
   digitalWrite(TANDY_CLOCK, LOW);
 }
+
+class ScopedNoInterrupts
+{
+  public:
+    ScopedNoInterrupts()
+    {
+      interrupts();
+    }
+
+    ~ScopedNoInterrupts()
+    {
+      noInterrupts();
+    }
+};
 
 inline void bit_bang_tandy_stop_bit()
 {
@@ -186,6 +204,30 @@ bool g_AltPressed = false;
 bool g_CapsLockActive = false;
 bool g_NumLockActive = false;
 
+// Tandy Scan Code Buffer
+uint8_t g_TandyBuffer[256]; // Yes, this is so I can use uint8_t wrapping.
+uint8_t g_TandyBufferFront = 0;
+uint8_t g_TandyBufferBack = 0;
+
+inline bool has_tandy_scancode()
+{
+  return g_TandyBufferFront != g_TandyBufferBack;
+}
+
+void enqueue_tandy_scancode(uint8_t code)
+{
+  g_TandyBuffer[g_TandyBufferBack++] = code;
+}
+
+uint8_t dequeue_tandy_scancode()
+{
+  if (has_tandy_scancode())
+  {
+    return g_TandyBuffer[g_TandyBufferFront++];
+  }
+  return 0u;
+}
+
 // These Tandy scan codes are affected by caps lock.
 // (Not currently used since they are the same on Tandy and PS/2)
 bool affected_by_caps_lock(uint8_t tandy_code)
@@ -288,18 +330,20 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
 
   if(key_break)
   {
-    bit_bang_tandy_scancode(tandy_code | 0x80u);
+    ScopedNoInterrupts sni;
+
+    enqueue_tandy_scancode(tandy_code | 0x80u);
     if(shift)
     {
-      bit_bang_tandy_scancode(TANDY_RSHIFT | 0x80u);
+      enqueue_tandy_scancode(TANDY_RSHIFT | 0x80u);
     }
     if(numlock)
     {
-      bit_bang_tandy_scancode(TANDY_NUMLOCK | 0x80u);
+      enqueue_tandy_scancode(TANDY_NUMLOCK | 0x80u);
     }
     if(unnumlock)
     {
-      bit_bang_tandy_scancode(TANDY_NUMLOCK);
+      enqueue_tandy_scancode(TANDY_NUMLOCK);
     }
 
     // Flash LED
@@ -307,19 +351,21 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
   }
   else
   {
+    ScopedNoInterrupts sni;
+
     if(shift)
     {
-      bit_bang_tandy_scancode(TANDY_RSHIFT);
+      enqueue_tandy_scancode(TANDY_RSHIFT);
     }
     if(numlock)
     {
-      bit_bang_tandy_scancode(TANDY_NUMLOCK);
+      enqueue_tandy_scancode(TANDY_NUMLOCK);
     }
     if(unnumlock)
     {
-      bit_bang_tandy_scancode(TANDY_NUMLOCK | 0x80u);
+      enqueue_tandy_scancode(TANDY_NUMLOCK | 0x80u);
     }
-    bit_bang_tandy_scancode(tandy_code);
+    enqueue_tandy_scancode(tandy_code);
 
     // Unflash LED
     digitalWrite(LED, LOW);
@@ -379,5 +425,19 @@ void loop()
       Serial.println( ps2_code.code, HEX );
       #endif
     }
+  }
+
+  for(uint8_t i = 0; i < MAX_CODES_PER_LOOP; ++i)
+  {
+    uint8_t tandy_code = 0;
+    {
+      ScopedNoInterrupts sni;
+      if (!has_tandy_scancode())
+      {
+        break;
+      }
+      tandy_code = dequeue_tandy_scancode();
+    }
+    bit_bang_tandy_scancode(tandy_code);
   }
 }

@@ -114,8 +114,13 @@ The following types of buttons have no meaning on a Tandy 1000 and are dead keys
 
 ## TODO:
 
-* Finish implementing Print/Hold/Break keys.
-* PS2KeyAdvanced supports other languages. Make that easier to configure.
-* Implement BUSY and RESET signals from Tandy. (Honestly, I'm probably not going to do this. Not using them doesn't seem to cause any problems, but I'll accept pull requests if someone else does it.)
+In no particular order:
 
+* Finish implementing Print and Break keys.
+* PS2KeyAdvanced supports other languages. Make that easier to configure.
+* Implement BUSY signal from Tandy. (The Arduino will fill the Tandy's buffer up but it will keep trying to send scancodes, which the Tandy ignores.)
+* Implement RESET signal from Tandy. (Honestly, I'm probably not going to do this, but I'll accept pull requests if someone else does it.)
+* Move Hold to a different key, figure out why it only works once.
+* Implement XT compatibility mode. (Send XT scancodes instead of Tandy scancodes. Mode will be switchable without rebooting. Some programs access the hardware directly and don't understand Tandy scancodes.)
+* PS/2 Typematic Repeat is a lot faster than what the Tandy can handle.
 
