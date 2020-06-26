@@ -111,7 +111,7 @@ If no, Tandy Shift must be pressed if the high bit is set.
 Codes 0x80 and up are things like ACPI and Media buttons, so we're ignoring them.
 */
 const uint8_t PS2_TO_TANDY_NORMAL_LOOKUP[128] = {
-  /* 0x00 */ 0x00, 0x45, 0x46, 0x3a, 0x00, 0x00, 0x2a, 0x36, /* 0x07 */
+  /* 0x00 */ 0x00, 0x45, 0x00, 0x3a, 0x00, 0x00, 0x2a, 0x36, /* 0x07 */
   /* 0x08 */ 0x1d, 0x1d, 0x38, 0x38, 0x00, 0x00, 0x00, 0x00, /* 0x0f */
   /* 0x10 */ 0x00, 0x58, 0x4f, 0x49, 0x51, 0x2b, 0x4e, 0x29, /* 0x17 */
   /* 0x18 */ 0x4a, 0x55, 0x53, 0x01, 0x0e, 0x0f, 0x1c, 0x39, /* 0x1f */
@@ -163,6 +163,26 @@ inline uint8_t special_shift_action(uint8_t ps2_code)
   return 0;
 }
 
+inline uint8_t xt_compat_action(uint8_t ps2_code)
+{
+  switch(ps2_code)
+  {
+    case 0x15: // left arrow
+      return 0x4b;
+    case 0x16: // right arrow
+      return 0x4d;
+    case 0x17: // up arrow
+      return 0x48;
+    case 0x18: // down arrow
+      return 0x50;
+    case 0x6b: // F11
+      return 0x57;
+    case 0x6c: // F12
+      return 0x58;
+  }
+  return 0;
+}
+
 // Defines for some of the Tandy modifier keys. (Just to make the code easier to read.)
 #define TANDY_CTRL 0x1d
 #define TANDY_LSHIFT 0x2a
@@ -203,6 +223,7 @@ bool g_CtrlPressed = false;
 bool g_AltPressed = false;
 bool g_CapsLockActive = false;
 bool g_NumLockActive = false;
+bool g_XTCompatMode = false;
 
 // Tandy Scan Code Buffer
 uint8_t g_TandyBuffer[256]; // Yes, this is so I can use uint8_t wrapping.
@@ -383,6 +404,12 @@ uint8_t convert_ps2_to_tandy_code(union PS2KeyAdvancedCode ps2_code)
       tandy_code = PS2_TO_TANDY_NUMLOCK_LOOKUP[ps2_code.code - 0x20];
     }
 
+    // Check for XT Compatibility Mode
+    else if(g_XTCompatMode)
+    {
+      tandy_code = xt_compat_action(ps2_code.code);
+    }
+
     // Look up the shift code, if applicable.
     else if(ps2_code.SHIFT)
     {
@@ -409,12 +436,6 @@ void loop()
     {
       uint8_t tandy_code = convert_ps2_to_tandy_code(ps2_code);
       transmit_tandy_code(tandy_code, ps2_code.BREAK);
-
-      // Never allow SCROLL LOCK light to be on.
-      if(ps2_code.code == 0x02)
-      {
-        g_Keyboard.setLock(g_Keyboard.getLock() & (~PS2_LOCK_SCROLL));
-      }
 
       #ifdef SHOW_DEBUG_PRINT
       Serial.print( "Value " );

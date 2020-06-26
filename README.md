@@ -91,13 +91,10 @@ Other Quirks:
 * Number Pad Asterisk will press Right Shift+8
 * Number Pad Forward Slash will press the Forward Slash/Question Mark key. (Pressing it with Shift held will result in a question mark.)
 
-Tandy Keys with no PS/2 Equivalent:
-
-* Hold is mapped to Scroll Lock. (Light is disabled since there's no way to determine state.)
-
 The following keys on the Tandy keyboard are not yet implemented:
 
 * Print (Likely to be PrtSc/SysRq)
+* Hold
 * Break (Likely to be Pause/Break)
 
 Keys that have multiple copies on a PS/2 keyboard but only one on a Tandy keyboard cannot be differentiated by the Tandy:
@@ -116,11 +113,10 @@ The following types of buttons have no meaning on a Tandy 1000 and are dead keys
 
 In no particular order:
 
-* Finish implementing Print and Break keys.
+* Finish implementing Print, Hold and Break keys.
 * PS2KeyAdvanced supports other languages. Make that easier to configure.
 * Implement BUSY signal from Tandy. (The Arduino will fill the Tandy's buffer up but it will keep trying to send scancodes, which the Tandy ignores.)
 * Implement RESET signal from Tandy. (Honestly, I'm probably not going to do this, but I'll accept pull requests if someone else does it.)
-* Move Hold to a different key, figure out why it only works once.
-* Implement XT compatibility mode. (Send XT scancodes instead of Tandy scancodes. Mode will be switchable without rebooting. Some programs access the hardware directly and don't understand Tandy scancodes.)
 * PS/2 Typematic Repeat is a lot faster than what the Tandy can handle.
+* Figure out why the Num/Caps/Scroll Lock keys cause the Arduino to lock up.
 
