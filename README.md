@@ -109,14 +109,15 @@ The following types of buttons have no meaning on a Tandy 1000 and are dead keys
 * Logo/Menu Keys
 * Meta/Super Keys
 
+Any PS/2 inputs recieved while the BUSY line from the Tandy is LOW will be ignored. Scancodes will not be transmitted to the Tandy, but any codes already in the queue will be transmitted as soon as the BUSY line is HIGH again.
+
 ## TODO:
 
 In no particular order:
 
 * Finish implementing Print, Hold and Break keys.
 * PS2KeyAdvanced supports other languages. Make that easier to configure.
-* Implement BUSY signal from Tandy. (The Arduino will fill the Tandy's buffer up but it will keep trying to send scancodes, which the Tandy ignores.)
 * Implement RESET signal from Tandy. (Honestly, I'm probably not going to do this, but I'll accept pull requests if someone else does it.)
-* PS/2 Typematic Repeat is a lot faster than what the Tandy can handle.
-* Figure out why the Num/Caps/Scroll Lock keys cause the Arduino to lock up.
+* Figure out why the Num/Caps Lock keys cause the Arduino to lock up.
+* Take pictures of how to wire up the BUSY line.
 

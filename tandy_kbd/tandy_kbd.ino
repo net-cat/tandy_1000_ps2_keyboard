@@ -5,6 +5,7 @@
 
 #define TANDY_DATA 5
 #define TANDY_CLOCK 6
+#define TANDY_BUSY 7
 
 #define LED 13
 
@@ -12,7 +13,7 @@
 // This will keep the buffer from filling up if you hold down a key.
 #define MAX_CODES_PER_LOOP 3
 
-#define SHOW_DEBUG_PRINT
+//#define SHOW_DEBUG_PRINT
 
 PS2KeyAdvanced g_Keyboard;
 
@@ -26,6 +27,7 @@ void setup()
   // Tandy Setup
   pinMode(TANDY_DATA, OUTPUT);
   pinMode(TANDY_CLOCK, OUTPUT);
+  pinMode(TANDY_BUSY, INPUT);
   pinMode(LED, OUTPUT);
   digitalWrite(TANDY_DATA, HIGH);
   digitalWrite(TANDY_CLOCK, LOW);
@@ -52,12 +54,12 @@ class ScopedNoInterrupts
   public:
     ScopedNoInterrupts()
     {
-      interrupts();
+      noInterrupts();
     }
 
     ~ScopedNoInterrupts()
     {
-      noInterrupts();
+      interrupts();
     }
 };
 
@@ -184,12 +186,12 @@ inline uint8_t xt_compat_action(uint8_t ps2_code)
 }
 
 // Defines for some of the Tandy modifier keys. (Just to make the code easier to read.)
-#define TANDY_CTRL 0x1d
-#define TANDY_LSHIFT 0x2a
-#define TANDY_RSHIFT 0x36
-#define TANDY_ALT 0x38
-#define TANDY_CAPSLOCK 0x3a
-#define TANDY_NUMLOCK 0x45
+#define TANDY_CTRL 0x1du
+#define TANDY_LSHIFT 0x2au
+#define TANDY_RSHIFT 0x36u
+#define TANDY_ALT 0x38u
+#define TANDY_CAPSLOCK 0x3au
+#define TANDY_NUMLOCK 0x45u
 
 // This union makes is more readable to decode PS2KeyAdvanced codes.
 union PS2KeyAdvancedCode
@@ -323,13 +325,35 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
       }
       break;
     case TANDY_CAPSLOCK:
-      g_CapsLockActive = g_Keyboard.getLock() & PS2_LOCK_CAPS;
-      // Caps Lock doesn't repeat from PS/2.
-      break;
+      if (set_flag_detect_change(g_CapsLockActive, g_Keyboard.getLock() & PS2_LOCK_CAPS))
+      {
+        if (g_CapsLockActive)
+        {
+          ScopedNoInterrupts sni;
+          enqueue_tandy_scancode(TANDY_CAPSLOCK);
+        }
+        else
+        {
+          ScopedNoInterrupts sni;
+          enqueue_tandy_scancode(TANDY_CAPSLOCK | 0x80u);
+        }
+      }
+      return;
     case TANDY_NUMLOCK:
-      g_NumLockActive = g_Keyboard.getLock() & PS2_LOCK_NUM;
-      // Num Lock doesn't repeat from PS/2.
-      break;
+      if (set_flag_detect_change(g_NumLockActive, g_Keyboard.getLock() & PS2_LOCK_NUM))
+      {
+        if (g_NumLockActive)
+        {
+          ScopedNoInterrupts sni;
+          enqueue_tandy_scancode(TANDY_NUMLOCK);
+        }
+        else
+        {
+          ScopedNoInterrupts sni;
+          enqueue_tandy_scancode(TANDY_NUMLOCK | 0x80u);
+        }
+      }
+      return;
   }
 
   // Since PS/2 codes don't map perfectly into Tandy codes, we may have to send some modifiers.
@@ -427,15 +451,27 @@ uint8_t convert_ps2_to_tandy_code(union PS2KeyAdvancedCode ps2_code)
 
 void loop()
 {
+  PS2KeyAdvancedCode ps2_code = {0};
+
   if (g_Keyboard.available())
   {
     // read the next key
-    PS2KeyAdvancedCode ps2_code = {g_Keyboard.read()};
+    ps2_code = {g_Keyboard.read()};
+  }
 
+  if (digitalRead(TANDY_BUSY))
+  {
     if(ps2_code.raw > 0)
     {
-      uint8_t tandy_code = convert_ps2_to_tandy_code(ps2_code);
-      transmit_tandy_code(tandy_code, ps2_code.BREAK);
+      if(ps2_code.code == 0x2)
+      {
+        g_XTCompatMode = g_Keyboard.getLock() & PS2_LOCK_SCROLL;
+      }
+      else
+      {
+        uint8_t tandy_code = convert_ps2_to_tandy_code(ps2_code);
+        transmit_tandy_code(tandy_code, ps2_code.BREAK);
+      }
 
       #ifdef SHOW_DEBUG_PRINT
       Serial.print( "Value " );
@@ -446,19 +482,19 @@ void loop()
       Serial.println( ps2_code.code, HEX );
       #endif
     }
-  }
 
-  for(uint8_t i = 0; i < MAX_CODES_PER_LOOP; ++i)
-  {
-    uint8_t tandy_code = 0;
+    for(uint8_t i = 0; i < MAX_CODES_PER_LOOP; ++i)
     {
-      ScopedNoInterrupts sni;
-      if (!has_tandy_scancode())
+      uint8_t tandy_code = 0;
       {
-        break;
+        ScopedNoInterrupts sni;
+        if (!has_tandy_scancode())
+        {
+          break;
+        }
+        tandy_code = dequeue_tandy_scancode();
       }
-      tandy_code = dequeue_tandy_scancode();
+      bit_bang_tandy_scancode(tandy_code);
     }
-    bit_bang_tandy_scancode(tandy_code);
   }
 }
