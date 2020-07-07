@@ -337,6 +337,7 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
           ScopedNoInterrupts sni;
           enqueue_tandy_scancode(TANDY_CAPSLOCK | 0x80u);
         }
+        delay(100); // I'm not sure why, but the sketch freezes without this.
       }
       return;
     case TANDY_NUMLOCK:
@@ -352,6 +353,7 @@ void transmit_tandy_code(uint8_t tandy_code, bool key_break)
           ScopedNoInterrupts sni;
           enqueue_tandy_scancode(TANDY_NUMLOCK | 0x80u);
         }
+        delay(100); // I'm not sure why, but the sketch freezes without this.
       }
       return;
   }

@@ -26,7 +26,7 @@ I personally have only tested this with a Tandy 1000 TX, but in theory the follo
 * Arduino Pro Mini or compatible board. ([example](https://store.arduino.cc/usa/arduino-pro-mini))
 * Some female Dupont connectors you can sacrifice. ([example](https://www.amazon.com/gp/product/B01EV70C78/))
 * Arduino IDE ([link](https://www.arduino.cc/en/Main/Software))
-* Small gauge wire. ([link](https://www.amazon.com/gp/product/B0791BL9HN/))
+* Small gauge wire. ([example](https://www.amazon.com/gp/product/B0791BL9HN/))
 * A USB to TTL Serial adapter for programming the arduino. ([example](https://www.amazon.com/gp/product/B00IJXZQ7C/))
 * A 5V molex connector you can sacrifice. ([example](https://www.amazon.com/gp/product/B07V5919H8/))
 
@@ -34,7 +34,7 @@ I personally have only tested this with a Tandy 1000 TX, but in theory the follo
 
 ### Configuring the Arduino
 
-> NOTE: Please be careful about programming the Arduino while it is installed. Your USB port can't power the Tandy 1000's 5V rail.
+> NOTE: Please be careful about programming the Arduino while it is installed. Your USB port probably can't power the Tandy 1000's 5V rail and it's probably not great for the Tandy to have only its 5V rail powered.
 
 1. Connect your USB/TTL Adapter to your system, installing the drivers if you have Windows.
 2. Install the [PS2KeyAdvanced](https://github.com/techpaul/PS2KeyAdvanced) library into your Arduino IDE. (Either from GitHub or the `Tools -> Manage Libraries...` menu.)
@@ -47,13 +47,13 @@ I personally have only tested this with a Tandy 1000 TX, but in theory the follo
 ### Connections
 
 1. Remove the Dupont connector block from the PS2 slot plate bracket. Replace the four wires with individual Dupont connectors.
-2. Most Arduino Pro Mini boards come with pin headers you can solder onto the board. Solder two pin headers into pins `3` and `4`. These are your PS/2 `CLK` and `DATA` lines, respectively.
+2. Most Arduino Pro Mini boards come with pin headers you can solder onto the board. Solder three pin headers into pins `3` and `4` and `GND`. These are your PS/2 `CLK`, `DATA` and `GND` connections, respectively.
 3. Solder the 5V molex connector to `VCC` and `GND` on the board. (Note that if you use a fan connector, those are connected to 12V. You will have to modify it to connect to 5V instead. The Pro Mini doesn't have the voltage regulation of the Uno.)
-4. Solder two long wires to pins `5` and `6` on the Pro Mini. (Use different colors to make it easier to tell them apart.) These will be your Tandy `DATA` and `CLK` lines, respectively. I suggest 18-24 inches. You can always cut off excess later.
+4. Solder two long wires to pins `5`, `6` and `7` on the Pro Mini. (Use different colors to make it easier to tell them apart.) These will be your Tandy `DATA`, `CLK` and `BUSY` lines, respectively. I suggest 18-24 inches. You can always cut off excess later.
 5. Strip about a half an inch of insulation off the other ends of the wires from step 4.
-6. Plug the PS/2's `VCC` and `GND` connections into the corresponding ports on the Pro Mini's serial pin header. (Looking at the female PS/2 connector, middle left for `VCC` and middle right for `GND`.)
-7. Plug the PS/2's `CLK` and `DATA` lines into the pin headers you soldered onto pins `3` and `4`, respectively. (Looking at the female PS/2 connector, top right for `CLK` and bottom right for `DATA`.)
-8. Feed the Tandy `CLK` and `DATA` wires from step for through the front of the case and plug the bare wire into the keyboard socket. (Looking at the Tandy 1000 keyboard connector, `CLK` is the far left and `DATA` is the bottom left, immediately below `CLK`.)
+6. Plug the PS/2's `VCC` connection into the corresponding port on the Pro Mini's serial pin header. (Looking at the female PS/2 connector, middle left for `VCC`.)
+7. Plug the PS/2's `CLK`, `DATA` and `GND` lines into the pin headers you soldered onto pins `3`, `4` and `GND`, respectively. (Looking at the female PS/2 connector, top right for `CLK`, bottom right for `DATA` and and middle right for `GND`.)
+8. Feed the Tandy `CLK`, `DATA` and `BUSY` wires from step 4 through the front of the case and plug the bare wire into the keyboard socket. (Looking at the Tandy 1000 keyboard connector, `CLK` is the far left, `DATA` is the bottom left (immediately below `CLK`) and `BUSY` is bottom.)
 9. Place a piece of tape over the keyboard connector to secure the wires. Also secure the wires inside the case to prevent them from being pulled out when the case is open.
 9. Plug the molex connector into a spare connector from the power supply.
 10. Mount the Pro Mini in the case in a way that makes you feel comfortable that it won't short anything out.
@@ -67,6 +67,9 @@ This is what the finished project looks like in my Tandy 1000 TX:
 ![Image of Arduino](https://raw.githubusercontent.com/net-cat/tandy_1000_ps2_keyboard/master/images/pro_mini_connected.jpg)
 
 ![Image of Keyboard Connector](https://raw.githubusercontent.com/net-cat/tandy_1000_ps2_keyboard/master/images/keyboard_connector_wired.jpg)
+
+![Image of keyboard connector after it's secured](https://raw.githubusercontent.com/net-cat/tandy_1000_ps2_keyboard/master/images/front_connector_protected.jpg) ![Image of internal keyboard wires after they're secured](https://raw.githubusercontent.com/net-cat/tandy_1000_ps2_keyboard/master/images/keyboard_wires_secured.jpg)
+
 
 ## Quirks
 
@@ -93,9 +96,9 @@ Other Quirks:
 
 The following keys on the Tandy keyboard are not yet implemented:
 
-* Print (Likely to be PrtSc/SysRq)
+* Print
 * Hold
-* Break (Likely to be Pause/Break)
+* Break
 
 Keys that have multiple copies on a PS/2 keyboard but only one on a Tandy keyboard cannot be differentiated by the Tandy:
 
@@ -111,13 +114,17 @@ The following types of buttons have no meaning on a Tandy 1000 and are dead keys
 
 Any PS/2 inputs recieved while the BUSY line from the Tandy is LOW will be ignored. Scancodes will not be transmitted to the Tandy, but any codes already in the queue will be transmitted as soon as the BUSY line is HIGH again.
 
+## XT Compatibility Mode
+
+XT Compatibility Mode exists to work around issues with certain games and programs that directly interact with the keyboard hardware. To activate it, simply turn on the Scroll Lock. While active, the arrow keys and F11 and F12 will send XT-compatible scan codes rather than the original Tandy scan codes.
+
 ## TODO:
+
+These are not things I necessarily plan to do. I will accept pull requests that implement them. (Or if enough people ask for them.)
 
 In no particular order:
 
-* Finish implementing Print, Hold and Break keys.
+* Implement Print, Hold and Break keys.
 * PS2KeyAdvanced supports other languages. Make that easier to configure.
-* Implement RESET signal from Tandy. (Honestly, I'm probably not going to do this, but I'll accept pull requests if someone else does it.)
-* Figure out why the Num/Caps Lock keys cause the Arduino to lock up.
-* Take pictures of how to wire up the BUSY line.
-
+* Implement RESET signal from Tandy.
+* Figure out why the Num/Caps Lock keys cause the Arduino to lock up without the `delay(100)` call.
